@@ -108,7 +108,7 @@ current_owner = yearly_complete["Cumulative Owner"].iloc[-1] if not yearly_compl
 current_affordable = yearly_complete["Cumulative Affordable"].iloc[-1] if not yearly_complete.empty else 0
 current_market_rate = yearly_complete["Cumulative Market Rate"].iloc[-1] if not yearly_complete.empty else 0
 
-st.header("Development Locations")
+st.header("Portsmouth Housing Pipeline")
 
 # Create columns for map and legend
 map_col, legend_col = st.columns([5, 1])
