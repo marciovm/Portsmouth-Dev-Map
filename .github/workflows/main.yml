@@ -1,0 +1,58 @@
+name: Wake Streamlit App
+
+# Triggers: run every 6 hours and on manual dispatch.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+concurrency:
+  group: wake-streamlit
+  cancel-in-progress: false
+
+jobs:
+  wakeup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (no repo code required, but keeps actions happy)
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Playwright & Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Wake app if the “Yes, get this app back up!” button is present
+        env:
+          TARGET_URL: "https://portsmouth-dev-map.streamlit.app"
+        run: |
+          python <<'PY'
+          import asyncio, os
+          from playwright.async_api import async_playwright
+          
+          URL = os.environ["TARGET_URL"]
+          
+          async def main():
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch(headless=True)
+                  page = await browser.new_page()
+                  await page.goto(URL, wait_until="load")
+                  try:
+                      # Look for the exact button text. Adjust timeout if needed.
+                      button = await page.wait_for_selector("text=Yes, get this app back up!", timeout=8000)
+                      await button.click()
+                      print("Wake-up button clicked — app should be restarting.")
+                  except Exception:
+                      print("Wake-up button not found — app is likely already running or the page changed.")
+                  finally:
+                      await browser.close()
+          
+          asyncio.run(main())
+          PY
